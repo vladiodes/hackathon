@@ -1,5 +1,16 @@
+import socket
 from socket import *
+import threading
 import time
+import random
+
+stop_threads = False
+
+
+def create_math_problems():
+    exercises = ["1 + 0", "1 + 1", "1 + 2", "1 + 3", "1 + 4", "1 + 5", "1 + 6", "1 + 7", "1 + 8"]
+    answers = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    return exercises, answers
 
 
 class Server:
@@ -8,12 +19,93 @@ class Server:
         self.name = socket.gethostname()
         self.ip = socket.gethostbyname(self.name)
 
-    def run(self):
+    def run_udp(self, tcp_socket_port, stop):
         print('Server started, listening on IP address {ip}'.format(ip=self.ip))
-        server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
-        server_UDP_socket.bind('', 12000)
-        while 1:
-            time.sleep(1)
-            message = makeOffer()
-            server_UDP_socket.sendto(message, ('255.255.255.255', 13117))
 
+        # make the UDP message according to the format
+        TCP_port_bytes = tcp_socket_port.tobytes(2, 'big')
+        message = bytearray([171, 205, 220, 186, 2, TCP_port_bytes[0], TCP_port_bytes[1]])
+
+        # bind socket
+        server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
+        server_UDP_socket.bind(('', 0))
+
+        # send offer messages
+        while True:
+            time.sleep(1)
+            global stop_threads
+            if not stop_threads:
+                server_UDP_socket.sendto(message, ('255.255.255.255', 13117))
+
+    def run_server(self):
+
+        global_vars = globals()
+
+        # bind the socket
+        server_TCP_socket = socket(AF_INET, SOCK_STREAM)
+        server_TCP_socket.bind(('', 0))
+        server_TCP_socket_port = (server_TCP_socket.getsockname())[1]
+
+        # run the thread that will send offer messages over UDP while listening for connection requests over TCP
+        global_vars['stop_threads'] = False
+        udp_thread = threading.Thread(target=self.run_udp, args=(server_TCP_socket_port, lambda: stop_threads,))
+        udp_thread.start()
+
+        # listen for connection requests
+        player1_socket = None
+        player2_socket = None
+        server_TCP_socket.listen(1)
+
+        # accept new connections
+        while (player1_socket is None) | (player2_socket is None):
+            connectionSocket, address = server_TCP_socket.accept()
+            if player1_socket is None:
+                player1_socket = connectionSocket
+            else:
+                player2_socket = connectionSocket
+
+        # 2 players have connected , stop accepting new players and stop sending offers
+        global_vars['stop_threads'] = True
+        time.sleep(10)
+
+        # get the group names, send welcome message
+        group1_name = player1_socket.recv(1024).decode()
+        group2_name = player2_socket.recv(1024).decode()
+        exercises, answers = create_math_problems()
+        exercise_number = random.randrange(0, len(exercises))
+        exercise = exercises[exercise_number]
+        answer = answers[exercise_number]
+        message_txt = "Welcome to Quick Maths\n" \
+                      "Player 1: {group1:group1_name}\n" \
+                      "Player 2: {group2:group2_name}\n" \
+                      "==\n" \
+                      "Please answer the following question as fast as you can\n" \
+                      "How much is {question:random_exercise}?"
+        message = message_txt.format(group1=group1_name, group2=group2_name, question=exercise)
+        player1_socket.send(message.encode())
+        player2_socket.send(message.encode())
+
+        # prepare threads for clients
+        global_vars['stop_threads'] = False
+        player1_thread = threading.Thread(target=self.play, args=(player1_socket, answer, 1, 2))
+        player2_thread = threading.Thread(target=self.play, args=(player2_socket, answer, 2, 1))
+
+        # start the threads
+        player1_thread.start()
+        player2_thread.start()
+
+        #now we decide the winner
+
+    def play(self, player_socket, expected_answer, group_number, opponent_group):
+
+        global_vars = globals()
+
+        while True:
+            answer = player_socket.recv(4).decode()
+            global stop_threads
+            if not stop_threads:
+                global_vars['stop_threads'] = True
+                if answer == expected_answer:
+                    player_socket.send(group_number.tobytes(4, 'big'))
+                else:
+                    player_socket.send(opponent_group.tobytes(4, 'big'))
