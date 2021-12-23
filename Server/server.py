@@ -146,3 +146,7 @@ class Server:
 
         player1_socket.send(msg)
         player2_socket.send(msg)
+
+
+if __name__ == "__main__":
+    Server().run_server()
