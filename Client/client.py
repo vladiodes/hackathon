@@ -2,6 +2,7 @@ from socket import *
 import struct
 import sys
 import threading
+import select
 
 # ===== magic numbers ======
 buf_size = 2<<10
@@ -35,11 +36,13 @@ def handleTCP(server_ip,server_port):
     return tcp_sock
 
 def read_from_stdin(tcp_socket):
-    try:
-        ans = sys.stdin.read(1)
-        tcp_socket.send(ans.encode())
-    except:
-        pass
+    reads,_,_ = select.select([sys.stdin,[],[],10])
+    if sys.stdin in reads:
+        ans=sys.stdin.read(1)
+        try:
+            tcp_socket.send(ans.encode())
+        except:
+            pass
     
 def gameMode(tcp_sock):
     """
