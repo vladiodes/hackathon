@@ -1,6 +1,7 @@
 from socket import *
 import struct
-import msvcrt
+import sys
+import threading
 
 # ===== magic numbers ======
 buf_size = 2<<10
@@ -14,6 +15,7 @@ def acceptOffer():
     Listens for offer broadcast from servers, returns a tuple (server_address,server_msg)
     """
     udp_sock = socket(AF_INET,SOCK_DGRAM)
+    udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
     udp_sock.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
     udp_sock.bind(('',udp_port))
     incoming_msg, server_ip_address = udp_sock.recvfrom(buf_size)
@@ -30,19 +32,30 @@ def handleTCP(server_ip,server_port):
     tcp_sock = socket(AF_INET, SOCK_STREAM)
     tcp_sock.connect((server_ip,server_port))
     tcp_sock.send((team_name + "\n").encode())
-    print(tcp_sock.recv(buf_size).decode())
     return tcp_sock
 
+def read_from_stdin(tcp_socket):
+    try:
+        ans = sys.stdin.read(1)
+        tcp_socket.send(ans.encode())
+    except:
+        pass
+    
 def gameMode(tcp_sock):
     """
     This function simulates the game via the tcp connection with the server
     """
     welcome_msg = tcp_sock.recv(buf_size).decode()
     print(welcome_msg)
-    answer = msvcrt.getch()
-    tcp_sock.sent(answer)
+    
+
+    stdin_thread = threading.Thread(target=read_from_stdin,args=(tcp_sock, ))
+    stdin_thread.start()
     response = tcp_sock.recv(buf_size).decode()
+    
     print(response)
+
+
 
 is_first_cycle = True
 while 1:
