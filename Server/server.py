@@ -1,8 +1,8 @@
-import socket
 from socket import *
 import threading
 import time
 import random
+import struct
 
 stop_threads = False
 
@@ -30,25 +30,25 @@ def play(player_socket, expected_answer, group_number, opponent_group):  # need 
 class Server:
 
     def __init__(self):
-        self.name = socket.gethostname()
-        self.ip = socket.gethostbyname(self.name)
+        self.name = gethostname()
+        self.ip = gethostbyname(self.name)
 
     def run_udp(self, tcp_socket_port):
         print('Server started, listening on IP address {ip}'.format(ip=self.ip))
 
         # make the UDP message according to the format
-        TCP_port_bytes = tcp_socket_port.tobytes(2, 'big')
-        message = bytearray([171, 205, 220, 186, 2, TCP_port_bytes[0], TCP_port_bytes[1]])
+        message = struct.pack('IbH',0xabcddcba,0x2,tcp_socket_port)
 
         # bind socket
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
-        server_UDP_socket.bind(('', 0))
+        server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+        server_UDP_socket.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+        #server_UDP_socket.bind(('', 0))
 
         # send offer messages
         global stop_threads
         while not stop_threads:
             time.sleep(1)
-            global stop_threads
             if not stop_threads:
                 server_UDP_socket.sendto(message, ('255.255.255.255', 13117))
             else:
@@ -65,7 +65,7 @@ class Server:
 
         # run the thread that will send offer messages over UDP while listening for connection requests over TCP
         global_vars['stop_threads'] = False
-        udp_thread = threading.Thread(target=self.run_udp, args=server_TCP_socket_port)
+        udp_thread = threading.Thread(target=self.run_udp, args=(server_TCP_socket_port, ))
         udp_thread.start()
 
         # listen for connection requests
@@ -93,13 +93,12 @@ class Server:
         exercise_number = random.randrange(0, len(exercises))
         exercise = exercises[exercise_number]
         exercise_answer = answers[exercise_number]
-        message_txt = "Welcome to Quick Maths\n" \
-                      "Player 1: {group1:group1_name}\n" \
-                      "Player 2: {group2:group2_name}\n" \
+        message = "Welcome to Quick Maths\n" \
+                      "Player 1: " + group1_name + \
+                      "Player 2: " + group2_name + \
                       "==\n" \
                       "Please answer the following question as fast as you can\n" \
-                      "How much is {question:random_exercise}?"
-        message = message_txt.format(group1=group1_name, group2=group2_name, question=exercise)
+                      "How much is " + exercise + " ?"
 
         # make "Game Over" message
         game_over_txt = "Game Over!\n" \
