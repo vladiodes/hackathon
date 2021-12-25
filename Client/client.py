@@ -65,6 +65,7 @@ def gameMode(tcp_sock):
     stdin_thread = threading.Thread(target=read_from_stdin,args=(tcp_sock, ))
     stdin_thread.start()
     try:
+        tcp_sock.settimeout(10)
         response = tcp_sock.recv(buf_size).decode()
         print(response)
     except:
