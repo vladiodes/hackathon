@@ -37,7 +37,9 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
                 other_player_socket.send(lose_msg.encode())
             lock.release
     except:
-        pass
+        if lock.locked():
+            lock.release()
+        
 
 
 class Server:
