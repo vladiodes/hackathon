@@ -9,6 +9,11 @@ buffer_size=2<<10
 winning_team = 0
 lock = threading.Lock()
 
+# ====== magic numbers
+time_out_interval = 10
+udp_port = 13117
+broadcast_address = "255.255.255.255"
+
 
 def create_math_problems():
     exercises = ["1 + 0", "1 + 1", "1 + 2", "1 + 3", "1 + 4", "1 + 5", "1 + 6", "1 + 7", "1 + 8"]
@@ -19,7 +24,7 @@ def create_math_problems():
 def play(player_socket,other_player_socket, expected_answer, group_number, opponent_group,win_msg,lose_msg):  # need to synchronize the threads
     global winning_team
     global lock
-    player_socket.settimeout(10)
+    player_socket.settimeout(time_out_interval)
     try:
         answer = player_socket.recv(buffer_size).decode()
         if answer == expected_answer:
@@ -28,14 +33,14 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
                 winning_team=group_number
                 player_socket.send(win_msg.encode())
                 other_player_socket.send(win_msg.encode())
-            lock.release
+            lock.release()
         else:
             lock.acquire()
             if winning_team==0:
                 winning_team=opponent_group
                 player_socket.send(lose_msg.encode())
                 other_player_socket.send(lose_msg.encode())
-            lock.release
+            lock.release()
     except:
         if lock.locked():
             lock.release()
@@ -61,20 +66,19 @@ class Server:
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
-        #server_UDP_socket.bind(('', 0))
 
         # send offer messages
         global stop_threads
         while not stop_threads:
             time.sleep(1)
             if not stop_threads:
-                server_UDP_socket.sendto(message, ('255.255.255.255', 13117))
-            else:
-                server_UDP_socket.close()
+                server_UDP_socket.sendto(message, (broadcast_address, udp_port))
+        server_UDP_socket.close()
 
     def run_server(self,is_first_cycle):
 
         global_vars = globals()
+        global_vars['winning_team'] = 0
 
         # bind the socket
         server_TCP_socket = socket(AF_INET, SOCK_STREAM)
@@ -102,11 +106,17 @@ class Server:
         # 2 players have connected , stop accepting new players and stop sending offers
         server_TCP_socket.close()
         global_vars['stop_threads'] = True
-        time.sleep(10)
+        time.sleep(time_out_interval)
+        udp_thread.join()
 
         # get the group names, send welcome message
-        group1_name = player1_socket.recv(buffer_size).decode()
-        group2_name = player2_socket.recv(buffer_size).decode()
+        try:
+            group1_name = player1_socket.recv(buffer_size).decode()
+            group2_name = player2_socket.recv(buffer_size).decode()
+        except:
+            player1_socket.close()
+            player2_socket.close()
+            return
         exercises, answers = create_math_problems()
         exercise_number = random.randrange(0, len(exercises))
         exercise = exercises[exercise_number]
@@ -118,16 +128,19 @@ class Server:
                       "Please answer the following question as fast as you can\n" \
                       "How much is " + exercise + " ?"
 
-        # make "Game Over" message
         msg = None
 
         # send welcome messages
-        player1_socket.send(message.encode())
-        player2_socket.send(message.encode())
+        try:
+            player1_socket.send(message.encode())
+            player2_socket.send(message.encode())
+        except:
+            player1_socket.close()
+            player2_socket.close()
+            return
                          
 
         # prepare threads for clients
-        global_vars['stop_threads'] = False
         win_msg_player1 = "Game Over!\n" \
                         "The correct answer was " + exercise_answer + "!\n" \
                         "Congratulations to the winner: (GROUP 1) " + group1_name
@@ -150,6 +163,9 @@ class Server:
                    "The game ended in a draw"
             player1_socket.send(msg.encode())
             player2_socket.send(msg.encode())
+        player1_socket.close()
+        player2_socket.close()
+
 
 if __name__ == "__main__":
     is_first_cycle = True
