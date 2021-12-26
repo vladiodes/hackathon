@@ -6,7 +6,7 @@ import select
 # ===== magic numbers ======
 buf_size = 2<<10
 udp_port = 13117
-team_name = "Nice name"
+team_name = "Descendants of Turing"
 magic_cookie = 0xabcddcba
 offer_op_code = 0x2
 timeout_interval = 10
