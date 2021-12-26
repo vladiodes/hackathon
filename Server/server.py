@@ -89,7 +89,7 @@ class Server:
 
         # bind the socket
         server_TCP_socket = socket(AF_INET, SOCK_STREAM)
-        server_TCP_socket.bind(('', 0))
+        server_TCP_socket.bind((self.ip, 0))
         server_TCP_socket_port = (server_TCP_socket.getsockname())[1]
 
         # run the thread that will send offer messages over UDP while listening for connection requests over TCP
