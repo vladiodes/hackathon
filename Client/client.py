@@ -1,7 +1,6 @@
 from socket import *
 import struct
 import sys
-import threading
 import select
 
 # ===== magic numbers ======
@@ -11,6 +10,7 @@ team_name = "Nice name"
 magic_cookie = 0xabcddcba
 offer_op_code = 0x2
 timeout_interval = 10
+timeout_waiting_for_game_start = 60
 
 def acceptOffer():
     """
@@ -40,39 +40,36 @@ def handleTCP(server_ip,server_port):
         return False
     return tcp_sock
 
-def read_from_stdin(tcp_socket):
-    reads,_,_ = select.select([sys.stdin],[],[],timeout_interval)
-    if sys.stdin in reads:
-        ans=sys.stdin.readline()[0]
-        try:
-            tcp_socket.send(ans.encode())
-        except:
-            pass
-    
 def gameMode(tcp_sock):
     """
     This function simulates the game via the tcp connection with the server
     """
+    tcp_sock.settimeout(timeout_waiting_for_game_start)
     try:
         welcome_msg = tcp_sock.recv(buf_size).decode()
         print(welcome_msg)
     except:
         tcp_sock.close()
         return
-    
-    
 
-    stdin_thread = threading.Thread(target=read_from_stdin,args=(tcp_sock, ))
-    stdin_thread.start()
-    try:
-        tcp_sock.settimeout(10)
-        response = tcp_sock.recv(buf_size).decode()
-        print(response)
-    except:
-        tcp_sock.close()
-        return
-
-    stdin_thread.join()
+    server_has_answered = False
+    tcp_sock.settimeout(timeout_interval)
+    reads,_,_ = select.select([sys.stdin,tcp_sock],[],[],timeout_interval)
+    if sys.stdin in reads:
+        ans = sys.stdin.readline()[0]
+        try:
+            tcp_sock.send(ans.encode())
+        except:
+            tcp_sock.close()
+            return
+    if tcp_sock in reads:
+        print(tcp_sock.recv(buf_size).decode())
+        server_has_answered = True
+    if not server_has_answered:
+        try:
+            print(tcp_sock.recv(buf_size).decode())
+        except:
+            pass
     tcp_sock.close()
     
 

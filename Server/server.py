@@ -3,7 +3,10 @@ import threading
 import time
 import random
 import struct
+import scapy.all
 
+# ========globals
+is_dev_network = False
 stop_threads = False
 buffer_size=2<<10
 winning_team = 0
@@ -50,8 +53,11 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
 class Server:
 
     def __init__(self):
-        self.name = gethostname()
-        self.ip = gethostbyname(self.name)
+        global is_grade
+        if is_dev_network:
+            self.ip = scapy.all.get_if_addr('eth1')
+        else:
+            self.ip = scapy.all.get_if_addr('eth2')
 
     def run_udp(self, tcp_socket_port,is_first_cycle):
         if is_first_cycle:
@@ -66,6 +72,7 @@ class Server:
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+        server_UDP_socket.bind((self.ip,0))
 
         # send offer messages
         global stop_threads
