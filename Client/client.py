@@ -19,7 +19,6 @@ def acceptOffer():
     udp_sock = socket(AF_INET,SOCK_DGRAM)
     udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
     udp_sock.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
-    udp_sock.bind(('',udp_port))
     incoming_msg, server_ip_address = udp_sock.recvfrom(buf_size)
     msg_tuple = struct.unpack('IbH',incoming_msg) #I = unsigned int, 4 bytes magic cookie, b = byte of offer msg, H = unsigned short, 2 bytes representing server port
     if msg_tuple[0] != magic_cookie or msg_tuple[1] != offer_op_code:
