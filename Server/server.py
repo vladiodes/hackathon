@@ -16,6 +16,9 @@ lock = threading.Lock()
 time_out_interval = 10
 udp_port = 13117
 broadcast_address = "255.255.255.255"
+magic_cookie = 0xabcddcba
+msg_byte = 0x2
+
 
 
 def create_math_problems():
@@ -66,7 +69,7 @@ class Server:
             print('Game over, sending out offer requests...')
 
         # make the UDP message according to the format
-        message = struct.pack('IbH',0xabcddcba,0x2,tcp_socket_port)
+        message = struct.pack('IbH',magic_cookie,msg_byte,tcp_socket_port)
 
         # bind socket
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
