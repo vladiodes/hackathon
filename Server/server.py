@@ -56,7 +56,6 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
 class Server:
 
     def __init__(self):
-        global is_grade
         if is_dev_network:
             self.ip = scapy.all.get_if_addr('eth1')
         else:
@@ -92,7 +91,7 @@ class Server:
 
         # bind the socket
         server_TCP_socket = socket(AF_INET, SOCK_STREAM)
-        server_TCP_socket.bind(('', 0))
+        server_TCP_socket.bind((self.ip, 0))
         server_TCP_socket_port = (server_TCP_socket.getsockname())[1]
 
         # run the thread that will send offer messages over UDP while listening for connection requests over TCP
