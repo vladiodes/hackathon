@@ -12,9 +12,9 @@ winning_team = 0
 lock = threading.Lock()
 
 # ====== magic numbers
-is_dev = True
+is_dev = False
 time_out_interval = 10
-udp_port = 13113 #TODO: Change!!!
+udp_port = 13117
 magic_cookie = 0xabcddcba
 msg_byte = 0x2
 DEV_NET = 'eth1'

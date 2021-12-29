@@ -4,11 +4,11 @@ import sys
 import select
 
 # ===== magic numbers ======
-is_dev_net = True
+is_dev_net = False
 dev_subnet = '172.1.'
 test_subnet = '172.99.'
 buf_size = 2<<10
-udp_port = 13113 #TODO: change!!!
+udp_port = 13117
 team_name = "Descendants of Turing"
 magic_cookie = 0xabcddcba
 offer_op_code = 0x2
