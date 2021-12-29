@@ -22,9 +22,9 @@ def acceptOffer():
     Listens for offer broadcast from servers, returns a tuple (server_address,server_msg)
     """
     udp_sock = socket(AF_INET,SOCK_DGRAM)
-    udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+    #udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
     udp_sock.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
-    udp_sock.bind((DEV_NET,udp_port))
+    udp_sock.bind((ip_address_dev,udp_port))
     incoming_msg, server_ip_address = udp_sock.recvfrom(buf_size)
     try:
         msg_tuple = struct.unpack('IbH',incoming_msg) #I = unsigned int, 4 bytes magic cookie, b = byte of offer msg, H = unsigned short, 2 bytes representing server port

@@ -6,7 +6,6 @@ import struct
 import scapy.all
 
 # ========globals
-is_dev_network = False
 stop_threads = False
 buffer_size=2<<10
 winning_team = 0
@@ -18,6 +17,10 @@ udp_port = 13117
 broadcast_address = "255.255.255.255"
 magic_cookie = 0xabcddcba
 msg_byte = 0x2
+DEV_NET = 'eth1'
+TEST_NET = 'eth2'
+DEV_IP = scapy.all.get_if_addr(DEV_NET)
+TEST_IP = scapy.all.get_if_addr(TEST_NET)
 
 
 
@@ -56,10 +59,7 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
 class Server:
 
     def __init__(self):
-        if is_dev_network:
-            self.ip = scapy.all.get_if_addr('eth1')
-        else:
-            self.ip = scapy.all.get_if_addr('eth2')
+        self.ip = DEV_IP
 
     def run_udp(self, tcp_socket_port,is_first_cycle):
         if is_first_cycle:
@@ -72,7 +72,7 @@ class Server:
 
         # bind socket
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
-        server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+        #server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
         server_UDP_socket.bind((self.ip,0))
 
