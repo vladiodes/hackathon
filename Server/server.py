@@ -12,15 +12,17 @@ winning_team = 0
 lock = threading.Lock()
 
 # ====== magic numbers
+is_dev = True
 time_out_interval = 10
-udp_port = 13117
-broadcast_address = "255.255.255.255"
+udp_port = 13113 #TODO: Change!!!
 magic_cookie = 0xabcddcba
 msg_byte = 0x2
 DEV_NET = 'eth1'
 TEST_NET = 'eth2'
 DEV_IP = scapy.all.get_if_addr(DEV_NET)
 TEST_IP = scapy.all.get_if_addr(TEST_NET)
+DEV_BROADCAST = "172.1.255.255"
+TEST_BROADCAST = "172.99.255.255"
 
 
 
@@ -59,7 +61,13 @@ def play(player_socket,other_player_socket, expected_answer, group_number, oppon
 class Server:
 
     def __init__(self):
-        self.ip = DEV_IP
+        if is_dev:
+            self.ip = DEV_IP
+            self.broadcast_dest = DEV_BROADCAST
+        else:
+            self.ip = TEST_IP
+            self.broadcast_dest = TEST_BROADCAST
+        
 
     def run_udp(self, tcp_socket_port,is_first_cycle):
         if is_first_cycle:
@@ -72,7 +80,7 @@ class Server:
 
         # bind socket
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
-        #server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+        server_UDP_socket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
         server_UDP_socket.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
         server_UDP_socket.bind((self.ip,0))
 
@@ -81,7 +89,7 @@ class Server:
         while not stop_threads:
             time.sleep(1)
             if not stop_threads:
-                server_UDP_socket.sendto(message, (broadcast_address, udp_port))
+                server_UDP_socket.sendto(message, (self.broadcast_dest, udp_port))
         server_UDP_socket.close()
 
     def run_server(self,is_first_cycle):

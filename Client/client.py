@@ -2,15 +2,13 @@ from socket import *
 import struct
 import sys
 import select
-import scapy.all
 
 # ===== magic numbers ======
-DEV_NET = 'eth1'
-TEST_NET = 'eth2'
-ip_address_dev = scapy.all.get_if_addr(DEV_NET)
-ip_address_test = scapy.all.get_if_addr(TEST_NET)
+is_test_net = False
+dev_subnet = '172.1.'
+test_subnet = '172.99.'
 buf_size = 2<<10
-udp_port = 13117
+udp_port = 13113 #TODO: change!!!
 team_name = "Descendants of Turing"
 magic_cookie = 0xabcddcba
 offer_op_code = 0x2
@@ -22,9 +20,9 @@ def acceptOffer():
     Listens for offer broadcast from servers, returns a tuple (server_address,server_msg)
     """
     udp_sock = socket(AF_INET,SOCK_DGRAM)
-    #udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+    udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
     udp_sock.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
-    udp_sock.bind((ip_address_dev,udp_port))
+    udp_sock.bind(('',udp_port))
     incoming_msg, server_ip_address = udp_sock.recvfrom(buf_size)
     try:
         msg_tuple = struct.unpack('IbH',incoming_msg) #I = unsigned int, 4 bytes magic cookie, b = byte of offer msg, H = unsigned short, 2 bytes representing server port
@@ -91,7 +89,13 @@ while 1:
         print("Server disconnected, listening for offer requests...")
     server_offer = acceptOffer()
     if server_offer != False:
-        print("Received offer from " + server_offer[0] + ", attempting to connect...")
+        addrs = server_offer[0].split('.')
+        server_address = None
+        if is_test_net:
+            server_address = test_subnet + addrs[2] + "." + addrs[3]
+        else:
+            server_address = dev_subnet + addrs[2] + "." + addrs[3]
+        print("Received offer from " + server_address + ", attempting to connect...")
         tcp_sock = handleTCP(server_offer[0],server_offer[1])
         if tcp_sock!=False:
             gameMode(tcp_sock)
