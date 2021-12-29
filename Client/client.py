@@ -2,6 +2,7 @@ from socket import *
 import struct
 import sys
 import select
+import scapy.all
 
 # ===== magic numbers ======
 is_dev_net = False
@@ -22,7 +23,7 @@ def acceptOffer():
     udp_sock = socket(AF_INET,SOCK_DGRAM)
     udp_sock.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
     udp_sock.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
-    udp_sock.bind(('',udp_port))
+    udp_sock.bind((scapy.all.get_if_addr('eth2'),udp_port))
     incoming_msg, server_ip_address = udp_sock.recvfrom(buf_size)
     try:
         msg_tuple = struct.unpack('IbH',incoming_msg) #I = unsigned int, 4 bytes magic cookie, b = byte of offer msg, H = unsigned short, 2 bytes representing server port
