@@ -4,7 +4,7 @@ import sys
 import select
 
 # ===== magic numbers ======
-is_test_net = False
+is_dev_net = True
 dev_subnet = '172.1.'
 test_subnet = '172.99.'
 buf_size = 2<<10
@@ -91,7 +91,7 @@ while 1:
     if server_offer != False:
         addrs = server_offer[0].split('.')
         server_address = None
-        if is_test_net:
+        if not is_dev_net:
             server_address = test_subnet + addrs[2] + "." + addrs[3]
         else:
             server_address = dev_subnet + addrs[2] + "." + addrs[3]
