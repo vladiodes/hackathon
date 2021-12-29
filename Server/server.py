@@ -24,11 +24,18 @@ TEST_IP = scapy.all.get_if_addr(TEST_NET)
 DEV_BROADCAST = "172.1.255.255"
 TEST_BROADCAST = "172.99.255.255"
 
-
-
 def create_math_problems():
-    exercises = ["1 + 0", "1 + 1", "1 + 2", "1 + 3", "1 + 4", "1 + 5", "1 + 6", "1 + 7", "1 + 8"]
-    answers = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    exercises = ["1 + 0", "1 + 1", "1 + 2", "1 + 3", "1 + 4", "1 + 5", "1 + 6", "1 + 7", "1 + 8","ln(e) = ?",
+    "3! = ?","log(8) in base 2 = ?","root of 25 = ?",
+    "what is the size of the vector (0.1)*(1,2,3,4) ? ",
+    "3 *3 = ?", "(1+2+3+4+5+6+7+8)*0", "x+y = 5 and x=3: y=?","e^0 = ?","cos(0) = ?",
+    "what is the derivative of y=5x+2?",
+    "what is the maximal number of roots of the polynomial (x-1)^2*x*(x/3)^6", "fib 4 = ?",
+    "what is Ramsi number (3,3)?","how much is 6 choose 1 ?",
+    "what is the determinant of the matrix:"+ "\n" + "(1 0 0)" + "\n" + "(0 3 0)" + "\n" + "(0 0 3)"]
+    answers = ["1", "2", "3", "4", "5", "6", "7", "8", "9","1",
+    "6","3","5","3","1","9"
+    ,"0","2","1","1","5","9","3","6","6","9"]
     return exercises, answers
 
 
