@@ -76,7 +76,7 @@ class Server:
             print('Game over, sending out offer requests...')
 
         # make the UDP message according to the format
-        message = struct.pack('IbH',magic_cookie,msg_byte,tcp_socket_port)
+        message = struct.pack('=IbH',magic_cookie,msg_byte,tcp_socket_port)
 
         # bind socket
         server_UDP_socket = socket(AF_INET, SOCK_DGRAM)
